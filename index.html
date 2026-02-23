@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODEMASTER — Le Mastermind Quotidien</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a40;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --accent: #f0c040;
+    --accent2: #e05a8a;
+    --radius: 8px;
+
+    --c1: #e05a8a; /* rose */
+    --c2: #5ab4e0; /* bleu */
+    --c3: #6bdc8a; /* vert */
+    --c4: #f0c040; /* jaune */
+    --c5: #c060e0; /* violet */
+    --c6: #f08040; /* orange */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  header {
+    width: 100%;
+    max-width: 500px;
+    padding: 24px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(240,192,64,0.4);
+  }
+
+  .logo span { color: var(--accent2); }
+
+  .date-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* AD ZONE TOP */
+  .ad-top {
+    width: 100%;
+    max-width: 500px;
+    margin: 16px 20px 0;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  main {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px 20px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .instructions {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .instructions strong { color: var(--text); }
+
+  /* BOARD */
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.35;
+    transition: opacity 0.3s;
+  }
+
+  .row.active { opacity: 1; }
+  .row.played { opacity: 0.85; }
+
+  .row-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    width: 16px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .pegs {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .peg {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .peg::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    position: absolute;
+    top: 8px;
+    left: 10px;
+  }
+
+  .peg.c1 { background: var(--c1); border-color: var(--c1); }
+  .peg.c2 { background: var(--c2); border-color: var(--c2); }
+  .peg.c3 { background: var(--c3); border-color: var(--c3); }
+  .peg.c4 { background: var(--c4); border-color: var(--c4); }
+  .peg.c5 { background: var(--c5); border-color: var(--c5); }
+  .peg.c6 { background: var(--c6); border-color: var(--c6); }
+
+  .peg.active-slot { border-color: var(--accent); border-style: dashed; animation: pulse-slot 1.5s infinite; }
+
+  @keyframes pulse-slot {
+    0%, 100% { box-shadow: 0 0 0 rgba(240,192,64,0); }
+    50% { box-shadow: 0 0 12px rgba(240,192,64,0.4); }
+  }
+
+  /* Feedback dots */
+  .feedback {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    width: 36px;
+    flex-shrink: 0;
+  }
+
+  .fdot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .fdot.exact { background: #4cde7a; border-color: #4cde7a; box-shadow: 0 0 6px rgba(76,222,122,0.7); }
+  .fdot.color { background: #f0c040; border-color: #f0c040; box-shadow: 0 0 6px rgba(240,192,64,0.7); }
+
+  /* COLOR PICKER */
+  .picker {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .picker-peg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .picker-peg::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    position: absolute;
+    top: 6px;
+    left: 8px;
+  }
+
+  .picker-peg:hover { transform: scale(1.15); }
+
+  .picker-peg.p1 { background: var(--c1); box-shadow: 0 0 10px rgba(224,90,138,0.4); }
+  .picker-peg.p2 { background: var(--c2); box-shadow: 0 0 10px rgba(90,180,224,0.4); }
+  .picker-peg.p3 { background: var(--c3); box-shadow: 0 0 10px rgba(107,220,138,0.4); }
+  .picker-peg.p4 { background: var(--c4); box-shadow: 0 0 10px rgba(240,192,64,0.4); }
+  .picker-peg.p5 { background: var(--c5); box-shadow: 0 0 10px rgba(192,96,224,0.4); }
+  .picker-peg.p6 { background: var(--c6); box-shadow: 0 0 10px rgba(240,128,64,0.4); }
+
+  /* BUTTONS */
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex: 1;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+
+  .btn-primary:hover { background: #ffd060; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { border-color: var(--muted); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s;
+  }
+
+  .modal-overlay.show .modal { transform: scale(1); }
+
+  .modal-emoji { font-size: 3rem; margin-bottom: 12px; }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+
+  .modal-title.win { color: var(--accent); }
+  .modal-title.lose { color: var(--accent2); }
+
+  .modal-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .solution-display {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .sol-peg {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+
+  .sol-peg.c1 { background: var(--c1); }
+  .sol-peg.c2 { background: var(--c2); }
+  .sol-peg.c3 { background: var(--c3); }
+  .sol-peg.c4 { background: var(--c4); }
+  .sol-peg.c5 { background: var(--c5); }
+  .sol-peg.c6 { background: var(--c6); }
+
+  .share-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: left;
+    margin-bottom: 16px;
+    line-height: 1.8;
+    word-break: break-all;
+  }
+
+  .timer-section {
+    margin-top: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .timer { font-size: 1.4rem; color: var(--text); letter-spacing: 2px; }
+
+  /* AD BOTTOM */
+  .ad-bottom {
+    width: 100%;
+    max-width: 500px;
+    margin: 16px 20px 24px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Streak */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Animations */
+  @keyframes pop-in {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .peg-placed { animation: pop-in 0.2s ease; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  .shake { animation: shake 0.4s ease; }
+
+  @keyframes row-reveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 0.85; transform: none; }
+  }
+
+  .row-reveal { animation: row-reveal 0.3s ease forwards; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Code<span>Master</span></div>
+  <div class="date-badge" id="date-display">—</div>
+</header>
+
+<div class="ad-top">[ PUBLICITÉ — 728×90 ]</div>
+
+<main>
+
+  <div class="instructions">
+    Trouvez la <strong>combinaison secrète de 4 couleurs</strong> (toutes différentes) en 10 essais.<br>
+    🟢 = bonne couleur, bonne place &nbsp;|&nbsp; 🟡 = bonne couleur, mauvaise place
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="picker" id="picker"></div>
+
+  <div class="actions">
+    <button class="btn btn-secondary" id="btn-erase">⌫ Effacer</button>
+    <button class="btn btn-primary" id="btn-submit" disabled>Valider →</button>
+  </div>
+
+</main>
+
+<div class="ad-bottom">[ PUBLICITÉ — 300×250 ]</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-emoji" id="modal-emoji"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div class="stats-bar" id="modal-stats"></div>
+    <div class="solution-display" id="modal-solution"></div>
+    <div class="share-box" id="share-box"></div>
+    <button class="btn btn-primary" id="btn-share" style="width:100%;margin-bottom:10px;">📋 Copier le résultat</button>
+    <div class="timer-section">Prochain défi dans<br><span class="timer" id="next-timer">—</span></div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['c1','c2','c3','c4','c5','c6'];
+const NAMES = {c1:'Rose', c2:'Bleu', c3:'Vert', c4:'Jaune', c5:'Violet', c6:'Orange'};
+const EMOJIS_COLOR = {c1:'🔴', c2:'🔵', c3:'🟢', c4:'🟡', c5:'🟣', c6:'🟠'};
+const MAX_TRIES = 10;
+const CODE_LEN = 4;
+
+// Daily seed from date
+function getDailySeed() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDayNumber() {
+  const start = new Date('2025-01-01');
+  const now = new Date();
+  return Math.floor((now - start) / 86400000);
+}
+
+function seededRand(seed) {
+  let s = parseInt(seed);
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+function generateSecret(seed) {
+  const rand = seededRand(seed);
+  const pool = [...COLORS];
+  const result = [];
+  for (let i = 0; i < CODE_LEN; i++) {
+    const idx = Math.floor(rand() * pool.length);
+    result.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  return result;
+}
+
+// State
+const seed = getDailySeed();
+const secret = generateSecret(seed);
+let currentRow = 0;
+let currentGuess = [];
+let activeSlot = 0;
+let gameOver = false;
+
+// Load saved state
+const saveKey = `codemaster_${seed}`;
+let savedState = null;
+try { savedState = JSON.parse(localStorage.getItem(saveKey)); } catch(e) {}
+
+// Stats
+const statsKey = 'codemaster_stats';
+let stats = { played: 0, won: 0, streak: 0, maxStreak: 0 };
+try { stats = JSON.parse(localStorage.getItem(statsKey)) || stats; } catch(e) {}
+
+// DOM
+const board = document.getElementById('board');
+const picker = document.getElementById('picker');
+const btnSubmit = document.getElementById('btn-submit');
+const btnErase = document.getElementById('btn-erase');
+const modal = document.getElementById('modal');
+
+// Date display
+const dateDisplay = document.getElementById('date-display');
+const now = new Date();
+dateDisplay.textContent = now.toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'}).toUpperCase();
+
+// Build board
+const rows = [];
+for (let r = 0; r < MAX_TRIES; r++) {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'row' + (r === 0 ? ' active' : '');
+  rowEl.innerHTML = `<span class="row-num">${r+1}</span><div class="pegs" id="pegs-${r}"></div><div class="feedback" id="fb-${r}"><div class="fdot"></div><div class="fdot"></div><div class="fdot"></div><div class="fdot"></div></div>`;
+  board.appendChild(rowEl);
+
+  const pegsEl = rowEl.querySelector('.pegs');
+  for (let s = 0; s < CODE_LEN; s++) {
+    const peg = document.createElement('div');
+    peg.className = 'peg' + (r === 0 && s === 0 ? ' active-slot' : '');
+    peg.dataset.row = r;
+    peg.dataset.slot = s;
+    peg.addEventListener('click', () => { if (!gameOver && r === currentRow) selectSlot(s); });
+    pegsEl.appendChild(peg);
+  }
+  rows.push(rowEl);
+}
+
+// Build picker
+COLORS.forEach(c => {
+  const p = document.createElement('div');
+  p.className = `picker-peg p${c.slice(1)}`;
+  p.title = NAMES[c];
+  p.addEventListener('click', () => placeColor(c));
+  picker.appendChild(p);
+});
+
+function selectSlot(idx) {
+  if (gameOver) return;
+  activeSlot = idx;
+  updateRowDisplay();
+}
+
+function placeColor(color) {
+  if (gameOver) return;
+  // Always fill the active slot (even if already filled = replaces it)
+  currentGuess[activeSlot] = color;
+
+  // Move activeSlot to the next EMPTY slot after current, then wrap around
+  let next = -1;
+  for (let i = activeSlot + 1; i < CODE_LEN; i++) {
+    if (!currentGuess[i]) { next = i; break; }
+  }
+  if (next === -1) {
+    for (let i = 0; i < activeSlot; i++) {
+      if (!currentGuess[i]) { next = i; break; }
+    }
+  }
+  // If all slots are filled, stay on current slot so user can still replace
+  if (next !== -1) activeSlot = next;
+
+  updateRowDisplay();
+  btnSubmit.disabled = currentGuess.filter(Boolean).length < CODE_LEN;
+}
+
+function updateRowDisplay() {
+  const pegsEl = document.getElementById(`pegs-${currentRow}`);
+  const pegs = pegsEl.querySelectorAll('.peg');
+  pegs.forEach((peg, i) => {
+    peg.className = 'peg' + (currentGuess[i] ? ' ' + currentGuess[i] : '');
+    if (i === activeSlot && !gameOver) peg.classList.add('active-slot');
+    if (currentGuess[i]) peg.classList.add('peg-placed');
+  });
+}
+
+function calcFeedback(guess, secret) {
+  let exact = 0, color = 0;
+  const sUsed = [...secret], gUsed = [...guess];
+  for (let i = 0; i < CODE_LEN; i++) {
+    if (guess[i] === secret[i]) { exact++; sUsed[i] = null; gUsed[i] = null; }
+  }
+  for (let i = 0; i < CODE_LEN; i++) {
+    if (gUsed[i]) {
+      const j = sUsed.indexOf(gUsed[i]);
+      if (j !== -1) { color++; sUsed[j] = null; }
+    }
+  }
+  return { exact, color };
+}
+
+function submitGuess() {
+  if (currentGuess.filter(Boolean).length < CODE_LEN) return;
+
+  const guess = [...currentGuess];
+  const fb = calcFeedback(guess, secret);
+
+  // Update feedback dots
+  const dots = document.getElementById(`fb-${currentRow}`).querySelectorAll('.fdot');
+  let di = 0;
+  for (let i = 0; i < fb.exact; i++) { dots[di++].classList.add('exact'); }
+  for (let i = 0; i < fb.color; i++) { dots[di++].classList.add('color'); }
+
+  rows[currentRow].classList.remove('active');
+  rows[currentRow].classList.add('played', 'row-reveal');
+
+  const won = fb.exact === CODE_LEN;
+
+  currentRow++;
+  currentGuess = [];
+  activeSlot = 0;
+  btnSubmit.disabled = true;
+
+  saveProgress(guess, fb, won);
+
+  if (won || currentRow >= MAX_TRIES) {
+    gameOver = true;
+    updateStats(won, currentRow - 1);
+    setTimeout(() => showModal(won, currentRow - 1), won ? 600 : 300);
+  } else {
+    rows[currentRow].classList.add('active');
+    updateRowDisplay();
+  }
+}
+
+// Emojis for share — full recap grid
+function buildShareText(won) {
+  const day = getDayNumber();
+  const tries = savedState ? savedState.feedbacks.length : currentRow;
+  let text = `CodeMaster #${day} ${won ? tries : 'X'}/${MAX_TRIES}\n\n`;
+
+  const feedbacks = savedState ? savedState.feedbacks : [];
+  feedbacks.forEach(fb => {
+    let line = '';
+    for (let i = 0; i < fb.exact; i++) line += '🟢';
+    for (let i = 0; i < fb.color; i++) line += '🟡';
+    const empty = CODE_LEN - fb.exact - fb.color;
+    for (let i = 0; i < empty; i++) line += '⬛';
+    text += line + '\n';
+  });
+
+  text += `\ncodemaster.example.com`;
+  return text;
+}
+
+function saveProgress(guess, fb, won) {
+  const prev = savedState || { guesses: [], feedbacks: [], done: false };
+  prev.guesses.push(guess);
+  prev.feedbacks.push(fb);
+  prev.done = won || (prev.guesses.length >= MAX_TRIES);
+  prev.won = won;
+  localStorage.setItem(saveKey, JSON.stringify(prev));
+  savedState = prev;
+}
+
+function updateStats(won, tries) {
+  stats.played++;
+  if (won) {
+    stats.won++;
+    stats.streak++;
+    if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
+  } else {
+    stats.streak = 0;
+  }
+  localStorage.setItem(statsKey, JSON.stringify(stats));
+}
+
+function showModal(won, tries) {
+  document.getElementById('modal-emoji').textContent = won ? '🎉' : '😔';
+  document.getElementById('modal-title').textContent = won ? 'BRAVO !' : 'PERDU !';
+  document.getElementById('modal-title').className = 'modal-title ' + (won ? 'win' : 'lose');
+  document.getElementById('modal-sub').textContent = won
+    ? `Trouvé en ${tries} essai${tries > 1 ? 's' : ''} !`
+    : `La combinaison était :`;
+
+  // Solution
+  const sol = document.getElementById('modal-solution');
+  sol.innerHTML = secret.map(c => `<div class="sol-peg ${c}"></div>`).join('');
+
+  // Stats
+  document.getElementById('modal-stats').innerHTML = `
+    <div class="stat"><div class="stat-num">${stats.played}</div><div class="stat-label">Joués</div></div>
+    <div class="stat"><div class="stat-num">${Math.round(stats.won/Math.max(1,stats.played)*100)}%</div><div class="stat-label">Victoires</div></div>
+    <div class="stat"><div class="stat-num">${stats.streak}</div><div class="stat-label">Série</div></div>
+    <div class="stat"><div class="stat-num">${stats.maxStreak}</div><div class="stat-label">Max</div></div>
+  `;
+
+  const shareText = buildShareText(won);
+  document.getElementById('share-box').textContent = shareText;
+
+  modal.classList.add('show');
+
+  // Timer
+  updateTimer();
+  setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setHours(24, 0, 0, 0);
+  const diff = tomorrow - now;
+  const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+  const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+  const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+  document.getElementById('next-timer').textContent = `${h}:${m}:${s}`;
+}
+
+btnSubmit.addEventListener('click', submitGuess);
+btnErase.addEventListener('click', () => {
+  if (gameOver) return;
+  // Erase active slot first, then last filled
+  if (currentGuess[activeSlot]) {
+    currentGuess[activeSlot] = null;
+  } else {
+    for (let i = CODE_LEN - 1; i >= 0; i--) {
+      if (currentGuess[i]) { currentGuess[i] = null; activeSlot = i; break; }
+    }
+  }
+  updateRowDisplay();
+  btnSubmit.disabled = currentGuess.filter(Boolean).length < CODE_LEN;
+});
+
+document.getElementById('btn-share').addEventListener('click', () => {
+  const txt = document.getElementById('share-box').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    document.getElementById('btn-share').textContent = '✅ Copié !';
+  });
+});
+
+// Restore saved state
+if (savedState && savedState.guesses) {
+  savedState.guesses.forEach((guess, i) => {
+    for (let s = 0; s < CODE_LEN; s++) {
+      const peg = document.querySelector(`#pegs-${i} .peg:nth-child(${s+1})`);
+      if (peg && guess[s]) peg.className = `peg ${guess[s]}`;
+    }
+    const fb = savedState.feedbacks[i];
+    const dots = document.getElementById(`fb-${i}`).querySelectorAll('.fdot');
+    let di = 0;
+    for (let j = 0; j < fb.exact; j++) dots[di++]?.classList.add('exact');
+    for (let j = 0; j < fb.color; j++) dots[di++]?.classList.add('color');
+    rows[i].classList.remove('active');
+    rows[i].classList.add('played');
+    currentRow = i + 1;
+  });
+
+  if (savedState.done) {
+    gameOver = true;
+    if (currentRow < MAX_TRIES) rows[currentRow]?.classList.remove('active');
+    setTimeout(() => showModal(savedState.won, currentRow - 1), 400);
+  } else {
+    rows[currentRow]?.classList.add('active');
+  }
+}
+</script>
+</body>
+</html>
