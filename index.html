@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CODEMASTER — Le Mastermind Quotidien</title>
+<title>MASTERCODLE — Le Mastermind Quotidien</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -82,23 +82,7 @@
     letter-spacing: 1px;
   }
 
-  /* AD ZONE TOP */
-  .ad-top {
-    width: 100%;
-    max-width: 500px;
-    margin: 16px 20px 0;
-    background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    font-family: 'Space Mono', monospace;
-  }
+  /* (ad zones removed) */
 
   main {
     width: 100%;
@@ -181,12 +165,12 @@
     left: 10px;
   }
 
-  .peg.c1 { background: var(--c1); border-color: var(--c1); }
-  .peg.c2 { background: var(--c2); border-color: var(--c2); }
-  .peg.c3 { background: var(--c3); border-color: var(--c3); }
-  .peg.c4 { background: var(--c4); border-color: var(--c4); }
-  .peg.c5 { background: var(--c5); border-color: var(--c5); }
-  .peg.c6 { background: var(--c6); border-color: var(--c6); }
+  .peg.c1 { background: var(--c1); border-color: var(--c1); box-shadow: 0 0 12px rgba(224,90,138,0.5); }
+  .peg.c2 { background: var(--c2); border-color: var(--c2); box-shadow: 0 0 12px rgba(90,180,224,0.5); }
+  .peg.c3 { background: var(--c3); border-color: var(--c3); box-shadow: 0 0 12px rgba(107,220,138,0.5); }
+  .peg.c4 { background: var(--c4); border-color: var(--c4); box-shadow: 0 0 12px rgba(240,192,64,0.5); }
+  .peg.c5 { background: var(--c5); border-color: var(--c5); box-shadow: 0 0 12px rgba(192,96,224,0.5); }
+  .peg.c6 { background: var(--c6); border-color: var(--c6); box-shadow: 0 0 12px rgba(240,128,64,0.5); }
 
   .peg.active-slot { border-color: var(--accent); border-style: dashed; animation: pulse-slot 1.5s infinite; }
 
@@ -387,23 +371,7 @@
 
   .timer { font-size: 1.4rem; color: var(--text); letter-spacing: 2px; }
 
-  /* AD BOTTOM */
-  .ad-bottom {
-    width: 100%;
-    max-width: 500px;
-    margin: 16px 20px 24px;
-    background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    min-height: 250px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    font-family: 'Space Mono', monospace;
-  }
+  /* (ad bottom removed) */
 
   /* Streak */
   .stats-bar {
@@ -458,11 +426,9 @@
 <body>
 
 <header>
-  <div class="logo">Code<span>Master</span></div>
+  <div class="logo">Master<span>Codle</span></div>
   <div class="date-badge" id="date-display">—</div>
 </header>
-
-<div class="ad-top">[ PUBLICITÉ — 728×90 ]</div>
 
 <main>
 
@@ -471,8 +437,6 @@
     🟢 = bonne couleur, bonne place &nbsp;|&nbsp; 🟡 = bonne couleur, mauvaise place
   </div>
 
-  <div class="board" id="board"></div>
-
   <div class="picker" id="picker"></div>
 
   <div class="actions">
@@ -480,9 +444,9 @@
     <button class="btn btn-primary" id="btn-submit" disabled>Valider →</button>
   </div>
 
-</main>
+  <div class="board" id="board"></div>
 
-<div class="ad-bottom">[ PUBLICITÉ — 300×250 ]</div>
+</main>
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modal">
@@ -687,7 +651,7 @@ function submitGuess() {
 function buildShareText(won) {
   const day = getDayNumber();
   const tries = savedState ? savedState.feedbacks.length : currentRow;
-  let text = `CodeMaster #${day} ${won ? tries : 'X'}/${MAX_TRIES}\n\n`;
+  let text = `MasterCodle #${day} ${won ? tries : 'X'}/${MAX_TRIES}\n\n`;
 
   const feedbacks = savedState ? savedState.feedbacks : [];
   feedbacks.forEach(fb => {
